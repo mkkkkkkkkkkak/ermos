@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
 
     steps:
     - uses: actions/checkout@v4
@@ -22,39 +21,39 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Dependencias
+    - name: Install deps
       run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential ccache
+        sudo apt-get update
+        sudo apt-get install -y zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libffi-dev libssl-dev build-essential
 
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ~/.buildozer
-          ~/.gradle
-        key: buildozer-${{ hashFiles('buildozer.spec') }}
+    - name: Install buildozer
+      run: pip install buildozer cython==0.29.36
 
-    - name: Instalar buildozer
-      run: pip install buildozer==1.5.0 cython==0.29.36
-
-    # 🔥 força usar versão estável (evita build-tools 37 bugado)
-    - name: Set Android config
+    # 🔥 instala SDK correto manualmente (ESSA É A CHAVE)
+    - name: Install Android SDK
       run: |
-        echo "android.api = 33" >> buildozer.spec
-        echo "android.minapi = 21" >> buildozer.spec
-        echo "android.sdk = 33" >> buildozer.spec
-        echo "android.ndk = 25b" >> buildozer.spec
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+        unzip tools.zip
+        mv cmdline-tools latest
 
-    # 🔥 aceita licenças corretamente
-    - name: Accept licenses
-      run: yes | sdkmanager --licenses || true
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+
+        yes | sdkmanager --licenses
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+    - name: Set env
+      run: |
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
     - name: Build APK
-      run: buildozer -v android debug
+      run: buildozer android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: ermos-apk
         path: bin/*.apk
-        retention-days: 30
