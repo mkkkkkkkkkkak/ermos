@@ -13,14 +13,19 @@ requirements = python3,kivy==2.3.0,pillow
 orientation = portrait
 fullscreen = 1
 
+# 🔥 permissões
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
+# 🔥 config android estável
 android.api = 33
 android.minapi = 21
 android.ndk = 25b
 android.build_tools = 33.0.2
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
+
+# 🔥 melhora compatibilidade
+android.enable_androidx = True
 
 [buildozer]
 log_level = 2
