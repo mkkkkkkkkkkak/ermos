@@ -1,63 +1,27 @@
-name: Build APK
+[app]
+title = Ermos Consciência
+package.name = ermosconsciencia
+package.domain = org.ermos
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,json
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
+version = 0.1
 
-    steps:
-    - uses: actions/checkout@v4
+requirements = python3,kivy==2.3.0,pillow
 
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: '17'
+orientation = portrait
+fullscreen = 1
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libffi-dev libssl-dev build-essential wget
+android.api = 33
+android.minapi = 21
+android.ndk = 25b
+android.build_tools = 33.0.2
+android.archs = arm64-v8a, armeabi-v7a
+android.allow_backup = True
 
-    - name: Install buildozer
-      run: pip install buildozer cython==0.29.36
-
-    # 🔥 INSTALA SDK MANUAL (ESSENCIAL)
-    - name: Setup Android SDK
-      run: |
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        cd $HOME/android-sdk/cmdline-tools
-
-        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-        unzip tools.zip
-        mv cmdline-tools latest
-
-        export ANDROID_HOME=$HOME/android-sdk
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-
-        yes | sdkmanager --licenses
-
-        sdkmanager "platform-tools"
-        sdkmanager "platforms;android-33"
-        sdkmanager "build-tools;33.0.2"
-
-    - name: Set environment
-      run: |
-        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
-
-    - name: Build APK
-      run: buildozer android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: ermos-apk
-        path: bin/*.apk
+[buildozer]
+log_level = 2
+warn_on_root = 1
